@@ -1,4 +1,4 @@
-import { SafeAreaView, View, StyleSheet, TextInput } from 'react-native';
+import { SafeAreaView, View, StyleSheet, TextInput, Keyboard } from 'react-native';
 import Button from './components/Button';
 import React, { useState } from 'react';
 import { evaluate, log } from 'mathjs';
@@ -9,37 +9,89 @@ export default function App() {
     const addOperator = (op) => {
         let exp = input;
         const last = exp.charAt(exp.length - 1);
-        if (last === "*" || last === "+" || last === "-" || last === "/") {
+        if (
+            (
+                last === "*" ||
+                last === "+" ||
+                last === "-" ||
+                last === "/" 
+            )  &&
+            (
+                op === "*" ||
+                op === "+" ||
+                op === "-" ||
+                op === "/" 
+            )
+        ) {
             exp = exp.slice(0, -1) + op;
             setInput(exp);
-        } else {
-            exp = exp + op;
-            setInput(exp);
-        }
-    };
-
-    const caculate = () => {
-        const inputString = input.toString();
-        
-        if (inputString === "") {
             return;
         }
 
-        const last = inputString.charAt(input.length - 1);
-
-        if (
-            last === "/" ||
-            last === "+" ||
-            last === "-" ||
-            last == "*" ||
-            last == "."
-        ) {
-            inputString = inputString.slice(0, inputString.length - 1);
+        if (last === ")" && op === ")") {
+            return;
         }
-        
-        const result = evaluate(inputString).toString();
-        setInput(result);
+
+        exp = exp + op;
+        setInput(exp);
+
     };
+
+    const caculate = () => {
+        try {
+            let inputString = input.toString();
+
+            if (inputString === "") {
+                return;
+            }
+
+            // Replace "ln" with "log"
+            inputString = inputString.replace(/\bln\b/g, "log");
+
+            // Replace "√(expression)" with sqrt(expression)"
+            inputString = inputString.replace("√(", "sqrt(");
+
+            console.log(inputString);
+
+            const last = inputString.charAt(input.length - 1);
+
+            if (
+                last === "/" ||
+                last === "+" ||
+                last === "-" ||
+                last == "*" ||
+                last == "."
+            ) {
+                inputString = inputString.slice(0, inputString.length - 1);
+            }
+
+            // caculate the result
+            var result = evaluate(inputString);
+
+            console.log(result);
+
+
+            // if the result is a long decimal, then round it to 6 decimal places
+            result = result.toFixed(6);
+
+            // if the result is an integer, then remove the decimal
+            result = parseFloat(result);
+
+            result = result.toString();
+
+            setInput(result);
+        } catch (error) {
+            alert("Invalid format used");
+        }
+    };
+
+    const clear = () => {
+        setInput(input.slice(0, input.length - 1));
+    };
+
+    const handleFocus = (e) => {
+        e.preventDefault();
+    }
 
     return (
         <View style={styles.container}>
@@ -49,42 +101,46 @@ export default function App() {
                 <TextInput
                     maxLength={15}
                     value={input}
-                    keyboardType="number-pad"
                     style={styles.input}
-                    editable={false}
-                    placeholder="0"
+                    showSoftInputOnFocus={false}
                 />
                 <View style={styles.row}>
                     <Button
                         text="√x"
                         theme="primary"
+                        onPress={() => addOperator("√(")}
                     />
                     <Button
                         text="x^2"
                         theme="primary"
+                        onPress={() => addOperator("^2")}
                     />
                     <Button
                         text="2^x"
                         theme="primary"
+                        onPress={() => addOperator("2^")}
                     />
                     <Button
-                        text="log(x)"
+                        text="ln(x)"
                         theme="primary"
+                        onPress={() => addOperator("ln(")}
                     />
                 </View>
                 <View style={styles.row}>
                     <Button
-                        text="C"
+                        text="AC"
                         theme="secondary"
                         onPress={() => setInput("")}
                     />
                     <Button
-                        text="x!"
-                        theme="primary"
+                        text="DEL"
+                        theme="secondary"
+                        onPress={() => clear()}
                     />
                     <Button
-                        text="%"
+                        text="x!"
                         theme="primary"
+                        onPress={() => addOperator("!")}
                     />
                     <Button
                         text="/"
@@ -160,16 +216,19 @@ export default function App() {
                 </View>
                 <View style={styles.row}>
                     <Button
-                        text="+/-"
+                        text=")"
                         theme="primary"
+                        onPress={() => addOperator(")")}
                     />
                     <Button
                         text="0"
                         theme="primary"
+                        onPress={() => setInput(prev => prev + "0")}
                     />
                     <Button
                         text="."
                         theme="primary"
+                        onPress={() => addOperator(".")}
                     />
                     <Button
                         text="="

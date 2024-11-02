@@ -46,6 +46,10 @@ export default ({ onPress, text, theme }) => {
         textStyles.push(styles.textWhite);
     }
 
+    if (theme === "delete") {
+        buttonStyles.push(styles.buttonDelete);
+    }
+
     return (
         <TouchableOpacity onPress={onPress} style={buttonStyles}>
             <Text style={textStyles}>{text}</Text>
